@@ -10,6 +10,9 @@ app.use(categoryRoutes);
 app.use(recipeRoutes);
 app.use(ingredientRoutes);
 
+// for debugging only
+app.disable('etag');
+
 app.listen(3000, () => {
 	console.log('Listening on port 3000');
 });
