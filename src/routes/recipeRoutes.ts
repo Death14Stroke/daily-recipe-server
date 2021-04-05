@@ -1,50 +1,48 @@
 import express from 'express';
 import _ from 'lodash';
+import { ValidatedRequest, createValidator } from 'express-joi-validation';
 import recipes from '../data/recipes.json';
+import {
+	searchParams,
+	SearchParamsSchema
+} from '../validators/recipeValidators';
 
 const router = express.Router();
+const validator = createValidator();
 
 router.get('/recipes/trending', (_req, res) => {
 	const trending = _.sampleSize(recipes, 5);
 	res.send(trending);
 });
 
-router.get('/search', (req, res) => {
-	const { cookTime, query, dishTypes } = req.query;
+router.post(
+	'/search',
+	validator.query(searchParams),
+	(req: ValidatedRequest<SearchParamsSchema>, res) => {
+		const { cookTime, query, dishTypes, ingredients } = req.body;
+		let results = recipes;
 
-	if (typeof dishTypes !== 'string')
-		return res.status(422).send('Invalid params');
+		if (cookTime) {
+			results = results.filter(recipe => recipe.time <= cookTime);
+		}
+		if (query) {
+			results = results.filter(recipe => recipe.title.includes(query));
+		}
+		if (dishTypes && dishTypes.length > 0) {
+			results = results.filter(recipe =>
+				dishTypes.includes(recipe.category.id)
+			);
+		}
+		if (ingredients && ingredients.length > 0) {
+			results = results.filter(recipe =>
+				_.some(recipe.ingredients, ingredient =>
+					ingredients.includes(ingredient.ingredient.ingredientId)
+				)
+			);
+		}
 
-	const categories = JSON.parse(dishTypes);
-
-	const results = _.filter(recipes, recipe => {
-		let isValid = cookTime ? recipe.time <= Number(cookTime) : true;
-
-		if (categories.length > 0)
-			isValid = isValid && _.includes(categories, recipe.category.id);
-
-		if (typeof query === 'string')
-			isValid = isValid && recipe.title.includes(query);
-
-		return isValid;
-	});
-
-	res.send(results);
-});
-
-router.get('/filter', (req, res) => {
-	const { ingredientId } = req.query;
-	if (ingredientId === undefined)
-		return res.status(422).send('Invalid parameters');
-
-	const resp = _.filter(recipes, recipe => {
-		return _.find(
-			recipe.ingredients,
-			i => i.ingredient.ingredientId === Number(ingredientId)
-		);
-	});
-
-	res.send(resp);
-});
+		res.send(results);
+	}
+);
 
 export default router;

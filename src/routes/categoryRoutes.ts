@@ -3,7 +3,7 @@ import categories from '../data/categories.json';
 
 const router = express.Router();
 
-router.get('/categories', (req, res) => {
+router.get('/categories', (_req, res) => {
 	res.send(categories);
 });
 

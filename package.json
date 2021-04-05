@@ -13,6 +13,8 @@
 	"license": "ISC",
 	"dependencies": {
 		"express": "^4.17.1",
+		"express-joi-validation": "^5.0.0",
+		"firebase-admin": "^9.6.0",
 		"lodash": "^4.17.21"
 	},
 	"devDependencies": {
