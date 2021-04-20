@@ -1,3 +1,4 @@
 build
 node_modules
 serviceAccountKey.json
+*.config.json

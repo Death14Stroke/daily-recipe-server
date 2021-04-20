@@ -5,8 +5,14 @@ import recipeRoutes from './routes/recipeRoutes';
 import ingredientRoutes from './routes/ingredientRoutes';
 import requireAuth from './middlewares/requireAuth';
 
+const dbUid = require('../firebase.config.json')['adminDatabaseUid'];
+
 admin.initializeApp({
-	credential: admin.credential.cert(require('../serviceAccountKey.json'))
+	credential: admin.credential.cert(require('../serviceAccountKey.json')),
+	databaseURL: 'https://daily-recipe-360b0-default-rtdb.firebaseio.com/',
+	databaseAuthVariableOverride: {
+		uid: dbUid
+	}
 });
 
 const app = express();

@@ -16,3 +16,13 @@ export interface SearchParamsSchema extends ValidatedRequestSchema {
 		ingredients: number[] | undefined;
 	};
 }
+
+export const bookmarkParams = Joi.object({
+	bookmarks: Joi.array()
+});
+
+export interface BookmarkParamsSchema extends ValidatedRequestSchema {
+	[ContainerTypes.Body]: {
+		bookmarks: number[];
+	};
+}
