@@ -1,18 +1,20 @@
 import express from 'express';
 import admin from 'firebase-admin';
-import categoryRoutes from './routes/categoryRoutes';
-import recipeRoutes from './routes/recipeRoutes';
-import ingredientRoutes from './routes/ingredientRoutes';
-import requireAuth from './middlewares/requireAuth';
+import mongoose from 'mongoose';
+import 'module-alias/register';
+import { categoryRoutes, ingredientRoutes, recipeRoutes } from '@routes';
+import { requireAuth } from '@middlewares';
 
-const dbUid = require('../firebase.config.json')['adminDatabaseUid'];
+require('dotenv').config();
 
 admin.initializeApp({
-	credential: admin.credential.cert(require('../serviceAccountKey.json')),
-	databaseURL: 'https://daily-recipe-360b0-default-rtdb.firebaseio.com/',
-	databaseAuthVariableOverride: {
-		uid: dbUid
-	}
+	credential: admin.credential.cert(require('../serviceAccountKey.json'))
+});
+
+const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zh6fp.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
+mongoose.connect(mongoUri);
+mongoose.connection.on('connected', () => {
+	console.log('Connected to Mongo instance');
 });
 
 const app = express();
@@ -23,6 +25,8 @@ app.use(categoryRoutes);
 app.use(recipeRoutes);
 app.use(ingredientRoutes);
 
-app.listen(3000, () => {
-	console.log('Listening on port 3000');
+//const port = process.env.PORT || 3003;
+
+app.listen(3003, () => {
+	console.log('Listening on port 3003');
 });

@@ -5,15 +5,35 @@ import ingredients from '../data/ingredients.json';
 import {
 	fetchParams,
 	FetchParamsSchema
-} from '../validators/ingredientValidators';
+} from '@validators/ingredientValidators';
+import {
+	trendingParams,
+	TrendingParamsSchema
+} from '@validators/commonValidators';
+import { Ingredient } from '@models';
 
 const router = express.Router();
 const validator = createValidator();
 
-router.get('/ingredients/trending', (_req, res) => {
-	const trending = _.sampleSize(ingredients, 20);
-	res.send(trending);
-});
+// new api
+router.get(
+	'/ingredients/trending',
+	validator.query(trendingParams),
+	async (req: ValidatedRequest<TrendingParamsSchema>, res) => {
+		const { count } = req.query;
+
+		try {
+			const ingredients = await Ingredient.aggregate([
+				{ $sample: { size: Number(count) } },
+				{ $project: { id: '$_id', name: 1, image: 1, _id: 0 } }
+			]);
+			return res.send(ingredients);
+		} catch (err) {
+			console.error(err);
+			return res.status(422).send('Could not fetch ingredients');
+		}
+	}
+);
 
 router.get(
 	'/ingredients',

@@ -8,30 +8,73 @@ import {
 	BookmarkParamsSchema,
 	searchParams,
 	SearchParamsSchema
-} from '../validators/recipeValidators';
+} from '@validators/recipeValidators';
+import {
+	apiRecipeDetails,
+	apiRecipeSteps,
+	apiTrendingRecipes
+} from '@api/recipes';
+import {
+	idFieldParams,
+	IdFieldParamsSchema,
+	trendingParams,
+	TrendingParamsSchema
+} from '@validators/commonValidators';
 
 const router = express.Router();
 const validator = createValidator();
 
-router.get('/recipes/trending', async (req, res) => {
-	const { uid } = req;
-	let trending = _.sampleSize(recipes, 5);
+// new api
+router.get(
+	'/recipes/trending',
+	validator.query(trendingParams),
+	async (req: ValidatedRequest<TrendingParamsSchema>, res) => {
+		const { count } = req.query;
 
-	try {
-		const dbRef = admin.database().ref(`/bookmarks/${uid}`);
-		const bookmarks = (await dbRef.once('value')).val() ?? {};
-		trending = trending.map(recipe => {
-			return {
-				...recipe,
-				isBookmarked: bookmarks[recipe.recipeId.toString()] || false
-			};
-		});
-	} catch (err) {
-		console.log(err);
+		try {
+			const data = await apiTrendingRecipes(count);
+			res.set('Cache-control', 'public, max-age=1000');
+			return res.send(data);
+		} catch (err) {
+			console.error(err);
+			return res.status(422).send('Could not fetch recipes');
+		}
 	}
+);
 
-	res.send(trending);
-});
+// new api
+router.get(
+	`/recipe/:id`,
+	validator.fields(idFieldParams),
+	async (req: ValidatedRequest<IdFieldParamsSchema>, res) => {
+		const { id } = req.params;
+
+		try {
+			const data = await apiRecipeDetails(id);
+			return res.send(data);
+		} catch (err) {
+			console.error(err);
+			return res.status(422).send('Could not fetch recipe');
+		}
+	}
+);
+
+// new api
+router.get(
+	'/steps/:id',
+	validator.fields(idFieldParams),
+	async (req: ValidatedRequest<IdFieldParamsSchema>, res) => {
+		const { id } = req.params;
+
+		try {
+			const data = await apiRecipeSteps(id);
+			return res.send(data);
+		} catch (err) {
+			console.error(err);
+			return res.status(422).send('Could not fetch recipe steps');
+		}
+	}
+);
 
 router.post(
 	'/search',
@@ -70,7 +113,7 @@ router.post(
 				};
 			});
 		} catch (err) {
-			console.log(err);
+			console.error(err);
 		}
 
 		res.send(results);
